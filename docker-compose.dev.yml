@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  database:
+    image: postgres:16
+    container_name: nestjs_postgres_dev
+    ports:
+      - '5433:5432' # dev 환경에서는 포트 충돌 방지
+    environment:
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+
+  nestjs-api:
+    build: .
+    container_name: nestjs_api_dev
+    ports:
+      - '3001:3000' # prod와 충돌 방지
+    depends_on:
+      - database
+    environment:
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_PORT: ${DATABASE_PORT}
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_NAME: ${DATABASE_NAME}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN}
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run start:dev # 수정 즉시 반영
+
+volumes:
+  postgres_data_dev:
