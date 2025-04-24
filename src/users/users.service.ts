@@ -4,6 +4,7 @@ import { User } from './user.entity';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -31,5 +32,19 @@ export class UsersService {
 
   async findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { email } });
+  }
+
+  async findProfile(userId: number) {
+    const user = await this.userRepository.findOneOrFail({
+      where: { id: userId },
+    });
+
+    const { password, deletedAt, ...result } = user;
+    return result;
+  }
+
+  async updateProfile(userId: number, dto: UpdateUserDto) {
+    await this.userRepository.update({ id: userId }, dto);
+    return this.findProfile(userId);
   }
 }

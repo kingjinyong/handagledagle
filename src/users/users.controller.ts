@@ -1,8 +1,17 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './user.entity';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
 export class UsersController {
@@ -14,8 +23,14 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('me')
+  @Get('profile')
   getMe(@Req() req: any) {
-    return '성공~';
+    return this.usersService.findProfile(req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('profile')
+  updateMe(@Req() req: any, @Body() dto: UpdateUserDto) {
+    return this.usersService.updateProfile(req.user.userId, dto);
   }
 }
