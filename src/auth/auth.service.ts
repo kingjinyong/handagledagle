@@ -3,6 +3,11 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
+interface JwtPayload {
+  sub: number;
+  email: string;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -37,5 +42,29 @@ export class AuthService {
       accessToken,
       refreshToken,
     };
+  }
+
+  async refreshToken(
+    oldRefreshToken: string,
+  ): Promise<{ accessToken: string }> {
+    try {
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(
+        oldRefreshToken,
+        {
+          secret: process.env.JWT_SECRET,
+        },
+      );
+
+      const newAccessToken = await this.jwtService.signAsync(
+        { sub: payload.sub, email: payload.email },
+        {
+          expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '1h',
+        },
+      );
+
+      return { accessToken: newAccessToken };
+    } catch (error) {
+      throw new UnauthorizedException('유효하지 않은 refresh token입니다.');
+    }
   }
 }
