@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PostImage } from './entities/post-image.entity';
@@ -76,5 +80,24 @@ export class PostService {
 
     Object.assign(post, dto);
     return this.postRepository.save(post);
+  }
+
+  async deletePost(id: number, userId: number) {
+    const post = await this.postRepository.findOne({
+      where: { id },
+      relations: ['user'],
+      withDeleted: true,
+    });
+
+    if (!post || post.deleteAt) {
+      throw new NotFoundException('게시글을 찾을 수 없습니다.');
+    }
+
+    if (post.user.id !== userId) {
+      throw new ForbiddenException('게시글을 삭제할 권한이 없습니다.');
+    }
+
+    await this.postRepository.softDelete(id);
+    return { message: '게시글이 삭제 되었습니다.' };
   }
 }

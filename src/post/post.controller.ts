@@ -12,6 +12,7 @@ import {
   Query,
   Patch,
   Param,
+  Delete,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
@@ -67,5 +68,11 @@ export class PostController {
     @Req() req: any,
   ) {
     return this.postService.update(id, dto, req.user.userId);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  async deletePost(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+    return this.postService.deletePost(id, req.user.userId);
   }
 }
