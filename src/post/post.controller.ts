@@ -6,6 +6,10 @@ import {
   UploadedFiles,
   Body,
   Req,
+  DefaultValuePipe,
+  ParseIntPipe,
+  Get,
+  Query,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
@@ -41,5 +45,14 @@ export class PostController {
     @Req() req: any,
   ) {
     return this.postService.create(dto, files, req.user.userId);
+  }
+
+  @Get()
+  async getPosts(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('sort', new DefaultValuePipe('latest')) sort: 'latest' | 'popular',
+  ) {
+    return this.postService.getPosts({ page, limit, sort });
   }
 }

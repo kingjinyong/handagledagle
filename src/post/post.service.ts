@@ -34,4 +34,28 @@ export class PostService {
 
     return this.postRepository.save(post);
   }
+
+  async getPosts({
+    page,
+    limit,
+    sort,
+  }: {
+    page: number;
+    limit: number;
+    sort: 'latest' | 'popular';
+  }) {
+    const [posts, total] = await this.postRepository.findAndCount({
+      relations: ['user', 'images'],
+      order: sort === 'latest' ? { createAt: 'DESC' } : { likeCount: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    return {
+      total,
+      page,
+      limit,
+      data: posts,
+    };
+  }
 }
