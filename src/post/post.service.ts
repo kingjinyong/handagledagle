@@ -10,6 +10,7 @@ import { Post } from './entities/post.entity';
 import { Repository } from 'typeorm';
 import { User } from 'src/users/user.entity';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { instanceToPlain } from 'class-transformer';
 
 @Injectable()
 export class PostService {
@@ -56,12 +57,12 @@ export class PostService {
       take: limit,
     });
 
-    return {
+    return instanceToPlain({
       total,
       page,
       limit,
       data: posts,
-    };
+    });
   }
 
   async update(postId: number, dto: UpdatePostDto, userId: number) {
@@ -105,6 +106,13 @@ export class PostService {
     const queryBuilder = this.postRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.user', 'user')
+      .addSelect([
+        'user.id',
+        'user.email',
+        'user.name',
+        'user.nickname',
+        'user.deletedAt',
+      ])
       .leftJoinAndSelect('post.images', 'images')
       .where('post.deleteAt IS NULL')
       .cache(false);
@@ -124,6 +132,11 @@ export class PostService {
         .cache(false);
     }
 
-    return queryBuilder.orderBy('post.createAt', 'DESC').cache(false).getMany();
+    return instanceToPlain(
+      await queryBuilder
+        .orderBy('post.createAt', 'DESC')
+        .cache(false)
+        .getMany(),
+    );
   }
 }
