@@ -75,4 +75,12 @@ export class PostController {
   async deletePost(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
     return this.postService.deletePost(id, req.user.userId);
   }
+
+  @Get('search')
+  async searchPosts(
+    @Query('type') type: 'title_content' | 'nickname',
+    @Query('keyword') keyword: string,
+  ) {
+    return this.postService.searchPosts(type, keyword);
+  }
 }

@@ -100,4 +100,30 @@ export class PostService {
     await this.postRepository.softDelete(id);
     return { message: '게시글이 삭제 되었습니다.' };
   }
+
+  async searchPosts(type: 'title_content' | 'nickname', keyword: string) {
+    const queryBuilder = this.postRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.user', 'user')
+      .leftJoinAndSelect('post.images', 'images')
+      .where('post.deleteAt IS NULL')
+      .cache(false);
+
+    if (type === 'title_content') {
+      queryBuilder
+        .andWhere(
+          '(post.title ILIKE :keyword OR post.content ILIKE :keyword)',
+          { keyword: `%${keyword}%` },
+        )
+        .cache(false);
+    } else if (type === 'nickname') {
+      queryBuilder
+        .andWhere('user.nickname ILIKE :keyword', {
+          keyword: `%${keyword}%`,
+        })
+        .cache(false);
+    }
+
+    return queryBuilder.orderBy('post.createAt', 'DESC').cache(false).getMany();
+  }
 }
