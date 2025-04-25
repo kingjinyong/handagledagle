@@ -1,8 +1,10 @@
+import { Post } from 'src/post/entities/post.entity';
 import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
   DeleteDateColumn,
+  OneToMany,
 } from 'typeorm';
 
 @Entity()
@@ -21,6 +23,9 @@ export class User {
 
   @Column()
   password: string;
+
+  @OneToMany(() => Post, (post) => post.user)
+  posts: Post[];
 
   @DeleteDateColumn()
   deletedAt?: Date;

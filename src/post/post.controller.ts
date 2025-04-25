@@ -1,0 +1,45 @@
+import {
+  Controller,
+  Post,
+  UseGuards,
+  UseInterceptors,
+  UploadedFiles,
+  Body,
+  Req,
+} from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+import { CreatePostDto } from './dto/create-post.dto';
+import { PostService } from './post.service';
+
+@Controller('posts')
+export class PostController {
+  constructor(private readonly postService: PostService) {}
+
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+    AnyFilesInterceptor({
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, cb) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(
+            null,
+            `${file.fieldname}-${uniqueSuffix}${extname(file.originalname)}`,
+          );
+        },
+      }),
+    }),
+  )
+  async createPost(
+    @Body() dto: CreatePostDto,
+    @UploadedFiles() files: Express.Multer.File[],
+    @Req() req: any,
+  ) {
+    return this.postService.create(dto, files, req.user.userId);
+  }
+}
