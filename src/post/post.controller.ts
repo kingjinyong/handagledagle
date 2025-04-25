@@ -10,6 +10,8 @@ import {
   ParseIntPipe,
   Get,
   Query,
+  Patch,
+  Param,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
@@ -17,6 +19,7 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { CreatePostDto } from './dto/create-post.dto';
 import { PostService } from './post.service';
+import { UpdatePostDto } from './dto/update-post.dto';
 
 @Controller('posts')
 export class PostController {
@@ -54,5 +57,15 @@ export class PostController {
     @Query('sort', new DefaultValuePipe('latest')) sort: 'latest' | 'popular',
   ) {
     return this.postService.getPosts({ page, limit, sort });
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  async updatePost(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdatePostDto,
+    @Req() req: any,
+  ) {
+    return this.postService.update(id, dto, req.user.userId);
   }
 }

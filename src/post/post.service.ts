@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PostImage } from './entities/post-image.entity';
 import { Post } from './entities/post.entity';
 import { Repository } from 'typeorm';
 import { User } from 'src/users/user.entity';
+import { UpdatePostDto } from './dto/update-post.dto';
 
 @Injectable()
 export class PostService {
@@ -57,5 +58,23 @@ export class PostService {
       limit,
       data: posts,
     };
+  }
+
+  async update(postId: number, dto: UpdatePostDto, userId: number) {
+    const post = await this.postRepository.findOne({
+      where: { id: postId },
+      relations: ['user'],
+    });
+
+    if (!post) {
+      throw new NotFoundException('게시글이 존재하지 않습니다.');
+    }
+
+    if (post.user.id !== userId) {
+      throw new NotFoundException('본인의 게시글만 수정할 수 있습니다.');
+    }
+
+    Object.assign(post, dto);
+    return this.postRepository.save(post);
   }
 }
