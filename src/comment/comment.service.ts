@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { Post } from 'src/post/entities/post.entity';
 import { User } from 'src/users/user.entity';
 import { Comment } from './entities/comment.entity';
+import { CommentResponseDto } from './dto/comment-response.dto';
 
 @Injectable()
 export class CommentService {
@@ -34,5 +35,27 @@ export class CommentService {
     }
 
     return this.commentRepository.save(comment);
+  }
+
+  async getCommentsByPost(postId: number): Promise<CommentResponseDto[]> {
+    const comments = await this.commentRepository.find({
+      where: { post: { id: postId } },
+      relations: ['user', 'parent'],
+      order: { createAt: 'ASC' }, // 오래된 댓글 먼저
+      withDeleted: true, // 삭제된 댓글도 조회
+    });
+
+    return comments.map((comment) => ({
+      id: comment.id,
+      content: comment.deleteAt ? '삭제된 댓글입니다.' : comment.content,
+      user: comment.user
+        ? {
+            id: comment.user.id,
+            nickname: comment.user.nickname,
+          }
+        : null,
+      parentId: comment.parent ? comment.parent.id : null,
+      createAt: comment.createAt,
+    }));
   }
 }
