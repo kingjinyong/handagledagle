@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -6,6 +11,7 @@ import { Post } from 'src/post/entities/post.entity';
 import { User } from 'src/users/user.entity';
 import { Comment } from './entities/comment.entity';
 import { CommentResponseDto } from './dto/comment-response.dto';
+import { UpdateCommentDto } from './dto/update-comment.dto';
 
 @Injectable()
 export class CommentService {
@@ -57,5 +63,45 @@ export class CommentService {
       parentId: comment.parent ? comment.parent.id : null,
       createAt: comment.createAt,
     }));
+  }
+
+  async update(commentId: number, userId: number, dto: UpdateCommentDto) {
+    const comment = await this.commentRepository.findOne({
+      where: { id: commentId },
+      relations: ['user'],
+      withDeleted: true,
+    });
+
+    if (!comment) {
+      throw new NotFoundException('댓글을 찾을 수 없습니다.');
+    }
+
+    if (comment.deleteAt) {
+      throw new BadRequestException('삭제된 댓글은 수정할 수 없습니다.');
+    }
+
+    if (comment.user.id !== userId) {
+      throw new ForbiddenException('댓글 작성자만 수정할 수 있습니다');
+    }
+
+    comment.content = dto.content;
+    return this.commentRepository.save(comment);
+  }
+
+  async delete(id: number, userId: number): Promise<void> {
+    const comment = await this.commentRepository.findOne({
+      where: { id },
+      relations: ['user', 'parent'],
+      withDeleted: false,
+    });
+
+    if (!comment) {
+      throw new NotFoundException('댓글을 찾을 수 없습니다.');
+    }
+    if (comment.user.id !== userId) {
+      throw new ForbiddenException('본인이 작성한 댓글만 삭제할 수 있습니다.');
+    }
+
+    await this.commentRepository.softDelete(id);
   }
 }
