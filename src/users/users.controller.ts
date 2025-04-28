@@ -5,6 +5,7 @@ import {
   Get,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -33,6 +34,26 @@ export class UsersController {
   @Patch('profile')
   updateMe(@Req() req: any, @Body() dto: UpdateUserDto) {
     return this.usersService.updateProfile(req.user.userId, dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('my-posts')
+  async getMyPosts(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Req() req: any,
+  ) {
+    return this.usersService.getMyPosts(req.user.userId, page, limit);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('my-comments')
+  async getMyComments(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Req() req: any,
+  ) {
+    return this.usersService.getMyComments(req.user.userId, page, limit);
   }
 
   @UseGuards(JwtAuthGuard)

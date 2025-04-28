@@ -1,16 +1,22 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.entity';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { Post } from 'src/post/entities/post.entity';
+import { Comment } from 'src/comment/entities/comment.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Post)
+    private readonly postRepository: Repository<Post>,
+    @InjectRepository(Comment)
+    private readonly commentRespository: Repository<Comment>,
   ) {}
 
   // 유저 생성
@@ -57,6 +63,40 @@ export class UsersService {
 
     const { password, deletedAt, ...result } = user;
     return result;
+  }
+
+  async getMyPosts(userId: number, page: number, limit: number) {
+    const [posts, total] = await this.postRepository.findAndCount({
+      where: { user: { id: userId }, deleteAt: IsNull() },
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { createAt: 'DESC' },
+      relations: ['images'],
+    });
+
+    return {
+      total,
+      page,
+      limit,
+      data: posts,
+    };
+  }
+
+  async getMyComments(userId: number, page: number, limit: number) {
+    const [comments, total] = await this.commentRespository.findAndCount({
+      where: { user: { id: userId }, deleteAt: IsNull() },
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { createAt: 'DESC' },
+      relations: ['post'],
+    });
+
+    return {
+      total,
+      page,
+      limit,
+      data: comments,
+    };
   }
 
   async updateProfile(userId: number, dto: UpdateUserDto) {
