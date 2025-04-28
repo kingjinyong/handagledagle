@@ -2,6 +2,9 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { Repository } from 'typeorm';
+import { User } from 'src/users/user.entity';
+import { InjectRepository } from '@nestjs/typeorm';
 
 interface JwtPayload {
   sub: number;
@@ -12,6 +15,8 @@ interface JwtPayload {
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -37,6 +42,8 @@ export class AuthService {
     const refreshToken = await this.jwtService.signAsync(payload, {
       expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
     });
+
+    await this.userRepository.update(user.id, { refreshToken });
 
     return {
       accessToken,
