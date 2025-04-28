@@ -26,6 +26,7 @@ export class CommentController {
   }
 
   @Get(':postId')
+  @UseGuards(JwtAuthGuard)
   async getComments(@Param('postId', ParseIntPipe) postId: number) {
     return this.commentService.getCommentsByPost(postId);
   }

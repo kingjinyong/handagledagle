@@ -84,6 +84,7 @@ export class PostController {
   }
 
   @Get('search')
+  @UseGuards(JwtAuthGuard)
   async searchPosts(
     @Query('type') type: 'title_content' | 'nickname',
     @Query('keyword') keyword: string,
