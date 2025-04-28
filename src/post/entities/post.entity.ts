@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import { PostImage } from './post-image.entity';
 import { Like } from 'src/like/entities/like.entity';
+import { Comment } from 'src/comment/entities/comment.entity';
 
 @Entity()
 export class Post {
@@ -43,6 +44,9 @@ export class Post {
     eager: true,
   })
   images: PostImage[];
+
+  @OneToMany(() => Comment, (comment) => comment.post)
+  comments: Comment[];
 
   @CreateDateColumn()
   createAt: Date;

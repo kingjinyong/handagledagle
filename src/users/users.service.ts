@@ -66,13 +66,17 @@ export class UsersService {
   }
 
   async getMyPosts(userId: number, page: number, limit: number) {
-    const [posts, total] = await this.postRepository.findAndCount({
-      where: { user: { id: userId }, deleteAt: IsNull() },
-      skip: (page - 1) * limit,
-      take: limit,
-      order: { createAt: 'DESC' },
-      relations: ['images'],
-    });
+    const queryBuilder = this.postRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.images', 'images')
+      .loadRelationCountAndMap('post.commentCount', 'post.comments') // 🔥
+      .where('post.user.id = :userId', { userId })
+      .andWhere('post.deleteAt IS NULL')
+      .orderBy('post.createAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const [posts, total] = await queryBuilder.getManyAndCount();
 
     return {
       total,

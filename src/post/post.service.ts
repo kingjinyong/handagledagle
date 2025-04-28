@@ -11,6 +11,7 @@ import { IsNull, Repository } from 'typeorm';
 import { User } from 'src/users/user.entity';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { instanceToPlain } from 'class-transformer';
+import { Comment } from 'src/comment/entities/comment.entity';
 
 @Injectable()
 export class PostService {
@@ -19,6 +20,8 @@ export class PostService {
     private readonly postRepository: Repository<Post>,
     @InjectRepository(PostImage)
     private readonly imageRepository: Repository<PostImage>,
+    @InjectRepository(Comment)
+    private readonly commentRepository: Repository<Comment>,
   ) {}
 
   async create(
@@ -50,12 +53,23 @@ export class PostService {
     limit: number;
     sort: 'latest' | 'popular';
   }) {
-    const [posts, total] = await this.postRepository.findAndCount({
-      relations: ['user', 'images'],
-      order: sort === 'latest' ? { createAt: 'DESC' } : { likeCount: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    const queryBuilder = this.postRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.user', 'user')
+      .leftJoinAndSelect('post.images', 'images')
+      .loadRelationCountAndMap('post.commentCount', 'post.comments')
+      .where('post.deleteAt IS NULL');
+
+    if (sort === 'latest') {
+      queryBuilder.orderBy('post.createAt', 'DESC');
+    } else if (sort === 'popular') {
+      queryBuilder.orderBy('post.likeCount', 'DESC');
+    }
+
+    const [posts, total] = await queryBuilder
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
 
     return instanceToPlain({
       total,
@@ -66,10 +80,14 @@ export class PostService {
   }
 
   async getPostById(id: number) {
-    const post = await this.postRepository.findOne({
-      where: { id, deleteAt: IsNull() },
-      relations: ['user', 'images'],
-    });
+    const post = await this.postRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.user', 'user')
+      .leftJoinAndSelect('post.images', 'images')
+      .loadRelationCountAndMap('post.commentCount', 'post.comments') // 🔥
+      .where('post.id = :id', { id })
+      .andWhere('post.deleteAt IS NULL')
+      .getOne();
 
     if (!post) {
       throw new NotFoundException('게시글을 찾을 수 없습니다.');
