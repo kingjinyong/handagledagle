@@ -2,7 +2,7 @@
 
 ### 이미지 pull
 ```bash
-docker build -t my-nestjs-app . 
+docker pull kingjinyong/my-nestjs-app:latest
 ```
 ### Docker 네트워크 만들기
 
@@ -22,7 +22,7 @@ docker run -d --name database --network my-network -e POSTGRES_USER=postgres -e 
 ### NestJS 컨테이너 네트워크 연결 실행
 
 ```bash
-docker run -d --name my-nestjs-container --network my-network -p 3000:3000 my-nestjs-app
+docker run -d --name my-nestjs-container -p 3000:3000 kingjinyong/my-nestjs-app:latest
 ```
 
 ---
