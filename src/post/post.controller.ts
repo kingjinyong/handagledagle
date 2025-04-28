@@ -52,12 +52,19 @@ export class PostController {
   }
 
   @Get()
-  async getPosts(
+  @UseGuards(JwtAuthGuard)
+  async getPostLists(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
     @Query('sort', new DefaultValuePipe('latest')) sort: 'latest' | 'popular',
   ) {
-    return this.postService.getPosts({ page, limit, sort });
+    return this.postService.getPostLists({ page, limit, sort });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  async getPost(@Param('id', ParseIntPipe) id: number) {
+    return this.postService.getPostById(id);
   }
 
   @Patch(':id')

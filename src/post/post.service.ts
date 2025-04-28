@@ -7,7 +7,7 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PostImage } from './entities/post-image.entity';
 import { Post } from './entities/post.entity';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { User } from 'src/users/user.entity';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { instanceToPlain } from 'class-transformer';
@@ -41,7 +41,7 @@ export class PostService {
     return this.postRepository.save(post);
   }
 
-  async getPosts({
+  async getPostLists({
     page,
     limit,
     sort,
@@ -63,6 +63,22 @@ export class PostService {
       limit,
       data: posts,
     });
+  }
+
+  async getPostById(id: number) {
+    const post = await this.postRepository.findOne({
+      where: { id, deleteAt: IsNull() },
+      relations: ['user', 'images'],
+    });
+
+    if (!post) {
+      throw new NotFoundException('게시글을 찾을 수 없습니다.');
+    }
+
+    await this.postRepository.update(id, { viewCount: post.viewCount + 1 });
+
+    post.viewCount += 1;
+    return instanceToPlain(post);
   }
 
   async update(postId: number, dto: UpdatePostDto, userId: number) {
