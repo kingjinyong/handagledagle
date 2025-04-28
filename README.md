@@ -22,7 +22,7 @@ docker run -d --name database --network my-network -e POSTGRES_USER=postgres -e 
 ### NestJS 컨테이너 네트워크 연결 실행
 
 ```bash
-docker run -d --name my-nestjs-container -p 3000:3000 kingjinyong/my-nestjs-app:latest
+docker run -d --name my-nestjs-container --network my-network -p 3000:3000 kingjinyong/my-nestjs-app:latest
 ```
 
 ---
