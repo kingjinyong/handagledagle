@@ -10,6 +10,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { PostImage } from './post-image.entity';
+import { Like } from 'src/like/entities/like.entity';
 
 @Entity()
 export class Post {
@@ -21,6 +22,9 @@ export class Post {
 
   @Column('text')
   content: string;
+
+  @OneToMany(() => Like, (like) => like.post)
+  likes: Like[];
 
   @Column({ default: 0 })
   likeCount: number;

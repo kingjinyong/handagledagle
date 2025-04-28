@@ -1,4 +1,5 @@
 import { Exclude } from 'class-transformer';
+import { Like } from 'src/like/entities/like.entity';
 import { Post } from 'src/post/entities/post.entity';
 import {
   Entity,
@@ -28,6 +29,9 @@ export class User {
 
   @OneToMany(() => Post, (post) => post.user)
   posts: Post[];
+
+  @OneToMany(() => Like, (like) => like.user)
+  likes: Like[];
 
   @DeleteDateColumn()
   deletedAt?: Date;
