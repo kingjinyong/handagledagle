@@ -51,6 +51,15 @@ export class PostController {
     return this.postService.create(dto, files, req.user.userId);
   }
 
+  @Get('search')
+  @UseGuards(JwtAuthGuard)
+  async searchPosts(
+    @Query('type') type: 'title_content' | 'nickname',
+    @Query('keyword') keyword: string,
+  ) {
+    return this.postService.searchPosts(type, keyword);
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard)
   async getPostLists(
@@ -81,14 +90,5 @@ export class PostController {
   @UseGuards(JwtAuthGuard)
   async deletePost(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
     return this.postService.deletePost(id, req.user.userId);
-  }
-
-  @Get('search')
-  @UseGuards(JwtAuthGuard)
-  async searchPosts(
-    @Query('type') type: 'title_content' | 'nickname',
-    @Query('keyword') keyword: string,
-  ) {
-    return this.postService.searchPosts(type, keyword);
   }
 }
